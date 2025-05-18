@@ -3,9 +3,11 @@ import type { Address } from 'abitype'
 import type { Client } from '../../clients/createClient.js'
 import type { Transport } from '../../clients/transports/createTransport.js'
 import type { ErrorType } from '../../errors/utils.js'
-import type { BlockTag } from '../../types/block.js'
+import type { BlockIdentifier, BlockTag } from '../../types/block.js'
 import type { Chain } from '../../types/chain.js'
 import type { Hex } from '../../types/misc.js'
+import { isBlockTag } from '../../utils/block/isBlockTag.js'
+import { serializeBlockIdentifier } from '../../utils/block/serializeBlockIdentifier.js'
 import type { RequestErrorType } from '../../utils/buildRequest.js'
 import {
   type NumberToHexErrorType,
@@ -18,7 +20,7 @@ export type GetStorageAtParameters = {
 } & (
   | {
       blockNumber?: undefined
-      blockTag?: BlockTag | undefined
+      blockTag?: BlockTag | BlockIdentifier | undefined
     }
   | {
       blockNumber?: bigint | undefined
@@ -65,7 +67,12 @@ export async function getStorageAt<chain extends Chain | undefined>(
     blockNumber !== undefined ? numberToHex(blockNumber) : undefined
   const data = await client.request({
     method: 'eth_getStorageAt',
-    params: [address, slot, blockNumberHex || blockTag],
+    params: [
+      address,
+      slot,
+      blockNumberHex ||
+        (isBlockTag(blockTag) ? blockTag : serializeBlockIdentifier(blockTag)),
+    ],
   })
   return data
 }

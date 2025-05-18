@@ -9,6 +9,7 @@ import { sendTransaction } from '../wallet/sendTransaction.js'
 import { anvilMainnet } from '../../../test/src/anvil.js'
 
 import { getBalance } from './getBalance.js'
+import { getBlock } from './getBlock.js'
 import { getBlockNumber } from './getBlockNumber.js'
 
 const client = anvilMainnet.getClient()
@@ -84,6 +85,73 @@ test('gets balance at block number', async () => {
     await getBalance(client, {
       address: targetAccount.address,
       blockNumber: currentBlockNumber - 3n,
+    }),
+  ).toMatchInlineSnapshot('10000000000000000000000n')
+})
+
+test('gets balance at blockTag with block number', async () => {
+  await setup()
+  const currentBlockNumber = await getBlockNumber(client)
+  expect(
+    await getBalance(client, {
+      address: targetAccount.address,
+      blockTag: { blockNumber: currentBlockNumber },
+    }),
+  ).toMatchInlineSnapshot('10006000000000000000000n')
+  expect(
+    await getBalance(client, {
+      address: targetAccount.address,
+      blockTag: { blockNumber: currentBlockNumber - 1n },
+    }),
+  ).toMatchInlineSnapshot('10003000000000000000000n')
+  expect(
+    await getBalance(client, {
+      address: targetAccount.address,
+      blockTag: { blockNumber: currentBlockNumber - 2n },
+    }),
+  ).toMatchInlineSnapshot('10001000000000000000000n')
+  expect(
+    await getBalance(client, {
+      address: targetAccount.address,
+      blockTag: { blockNumber: currentBlockNumber - 3n },
+    }),
+  ).toMatchInlineSnapshot('10000000000000000000000n')
+})
+
+test('gets balance at blockTag with block hash', async () => {
+  await setup()
+  const currentBlock = await getBlock(client)
+  const previousBlock1 = await getBlock(client, {
+    blockHash: currentBlock.parentHash,
+  })
+  const previousBlock2 = await getBlock(client, {
+    blockHash: previousBlock1.parentHash,
+  })
+  const previousBlock3 = await getBlock(client, {
+    blockHash: previousBlock2.parentHash,
+  })
+  expect(
+    await getBalance(client, {
+      address: targetAccount.address,
+      blockTag: { blockHash: currentBlock.hash },
+    }),
+  ).toMatchInlineSnapshot('10006000000000000000000n')
+  expect(
+    await getBalance(client, {
+      address: targetAccount.address,
+      blockTag: { blockHash: previousBlock1.hash },
+    }),
+  ).toMatchInlineSnapshot('10003000000000000000000n')
+  expect(
+    await getBalance(client, {
+      address: targetAccount.address,
+      blockTag: { blockHash: previousBlock2.hash },
+    }),
+  ).toMatchInlineSnapshot('10001000000000000000000n')
+  expect(
+    await getBalance(client, {
+      address: targetAccount.address,
+      blockTag: { blockHash: previousBlock3.hash },
     }),
   ).toMatchInlineSnapshot('10000000000000000000000n')
 })

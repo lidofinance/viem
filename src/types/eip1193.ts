@@ -930,7 +930,7 @@ export type PublicRpcSchema = [
       address: Address,
       /** An array of storage-keys that should be proofed and included. */
       storageKeys: Hash[],
-      block: BlockNumber | BlockTag,
+      block: BlockNumber | BlockTag | BlockIdentifier,
     ]
     ReturnType: Proof
   },

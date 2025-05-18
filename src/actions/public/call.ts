@@ -25,7 +25,7 @@ import {
   type RawContractErrorType,
 } from '../../errors/contract.js'
 import type { ErrorType } from '../../errors/utils.js'
-import type { BlockTag } from '../../types/block.js'
+import type { BlockIdentifier, BlockTag } from '../../types/block.js'
 import type { Chain } from '../../types/chain.js'
 import type { Hex } from '../../types/misc.js'
 import type { RpcTransactionRequest } from '../../types/rpc.js'
@@ -44,6 +44,8 @@ import {
   type EncodeFunctionDataErrorType,
   encodeFunctionData,
 } from '../../utils/abi/encodeFunctionData.js'
+import { isBlockTag } from '../../utils/block/isBlockTag.js'
+import { serializeBlockIdentifier } from '../../utils/block/serializeBlockIdentifier.js'
 import type { RequestErrorType } from '../../utils/buildRequest.js'
 import {
   type GetChainContractAddressErrorType,
@@ -106,7 +108,7 @@ export type CallParameters<
          * The balance of the account at a block tag.
          * @default 'latest'
          */
-        blockTag?: BlockTag | undefined
+        blockTag?: BlockTag | BlockIdentifier | undefined
       }
   )
 type FormattedCall<chain extends Chain | undefined = Chain | undefined> =
@@ -366,9 +368,14 @@ async function scheduleMulticall<chain extends Chain | undefined>(
     })
   }
 
-  const blockNumberHex =
-    typeof blockNumber === 'bigint' ? numberToHex(blockNumber) : undefined
-  const block = blockNumberHex || blockTag
+  const blockNumberHex = blockNumber
+    ? typeof blockNumber === 'bigint'
+      ? numberToHex(blockNumber)
+      : undefined
+    : undefined
+  const block =
+    blockNumberHex ||
+    (isBlockTag(blockTag) ? blockTag : serializeBlockIdentifier(blockTag))
 
   const { schedule } = createBatchScheduler({
     id: `${client.uid}.${block}`,

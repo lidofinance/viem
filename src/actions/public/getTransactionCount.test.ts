@@ -8,6 +8,7 @@ import { sendTransaction } from '../wallet/sendTransaction.js'
 
 import { anvilMainnet } from '../../../test/src/anvil.js'
 
+import { getBlock } from './getBlock.js'
 import { getTransactionCount } from './getTransactionCount.js'
 
 const client = anvilMainnet.getClient()
@@ -52,6 +53,25 @@ test('args: blockTag', async () => {
       blockTag: 'latest',
     }),
   ).toBe(676)
+})
+
+test('args: blockTag with block number', async () => {
+  expect(
+    await getTransactionCount(client, {
+      address: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      blockTag: { blockNumber: 14932234n },
+    }),
+  ).toBe(368)
+})
+
+test('args: blockTag with block hash', async () => {
+  const block = await getBlock(client, { blockNumber: 14932234n })
+  expect(
+    await getTransactionCount(client, {
+      address: '0xa5cc3c03994db5b0d9a5eedd10cabab0813678ac',
+      blockTag: { blockHash: block.hash },
+    }),
+  ).toBe(368)
 })
 
 test('no count', async () => {

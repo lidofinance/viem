@@ -3,8 +3,10 @@ import type { Address } from 'abitype'
 import type { Client } from '../../clients/createClient.js'
 import type { Transport } from '../../clients/transports/createTransport.js'
 import type { ErrorType } from '../../errors/utils.js'
-import type { BlockTag } from '../../types/block.js'
+import type { BlockIdentifier, BlockTag } from '../../types/block.js'
 import type { Chain } from '../../types/chain.js'
+import { isBlockTag } from '../../utils/block/isBlockTag.js'
+import { serializeBlockIdentifier } from '../../utils/block/serializeBlockIdentifier.js'
 import type { RequestErrorType } from '../../utils/buildRequest.js'
 import {
   type NumberToHexErrorType,
@@ -23,7 +25,7 @@ export type GetBalanceParameters = {
   | {
       blockNumber?: undefined
       /** The balance of the account at a block tag. */
-      blockTag?: BlockTag | undefined
+      blockTag?: BlockTag | BlockIdentifier | undefined
     }
 )
 
@@ -78,7 +80,11 @@ export async function getBalance<chain extends Chain | undefined>(
 
   const balance = await client.request({
     method: 'eth_getBalance',
-    params: [address, blockNumberHex || blockTag],
+    params: [
+      address,
+      blockNumberHex ||
+        (isBlockTag(blockTag) ? blockTag : serializeBlockIdentifier(blockTag)),
+    ],
   })
   return BigInt(balance)
 }

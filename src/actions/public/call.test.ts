@@ -44,6 +44,7 @@ import {
   toHex,
 } from '../../index.js'
 import { call, getRevertErrorData } from './call.js'
+import { getBlock } from './getBlock.js'
 import { readContract } from './readContract.js'
 
 const client = anvilMainnet.getClient({ account: accounts[0].address })
@@ -62,6 +63,34 @@ const sourceAccount = accounts[0]
 
 test('default', async () => {
   const { data } = await call(client, {
+    data: name4bytes,
+    account: sourceAccount.address,
+    to: wagmiContractAddress,
+  })
+  expect(data).toMatchInlineSnapshot(
+    '"0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000057761676d69000000000000000000000000000000000000000000000000000000"',
+  )
+})
+
+test('args: blockTag with block number', async () => {
+  const { data } = await call(client, {
+    blockTag: { blockNumber: anvilMainnet.forkBlockNumber - 1n },
+    data: name4bytes,
+    account: sourceAccount.address,
+    to: wagmiContractAddress,
+  })
+  expect(data).toMatchInlineSnapshot(
+    '"0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000057761676d69000000000000000000000000000000000000000000000000000000"',
+  )
+})
+
+test('args: blockTag with block hash', async () => {
+  const block = await getBlock(client, {
+    blockNumber: anvilMainnet.forkBlockNumber - 2n,
+  })
+
+  const { data } = await call(client, {
+    blockTag: { blockHash: block.hash },
     data: name4bytes,
     account: sourceAccount.address,
     to: wagmiContractAddress,

@@ -2,10 +2,12 @@ import type { Address } from 'abitype'
 import type { Client } from '../../clients/createClient.js'
 import type { Transport } from '../../clients/transports/createTransport.js'
 import type { ErrorType } from '../../errors/utils.js'
-import type { BlockTag } from '../../types/block.js'
+import type { BlockIdentifier, BlockTag } from '../../types/block.js'
 import type { Chain } from '../../types/chain.js'
 import type { Hash } from '../../types/misc.js'
 import type { Proof } from '../../types/proof.js'
+import { isBlockTag } from '../../utils/block/isBlockTag.js'
+import { serializeBlockIdentifier } from '../../utils/block/serializeBlockIdentifier.js'
 import type { RequestErrorType } from '../../utils/buildRequest.js'
 import {
   type NumberToHexErrorType,
@@ -33,7 +35,7 @@ export type GetProofParameters = {
        * The block tag.
        * @default 'latest'
        */
-      blockTag?: BlockTag | undefined
+      blockTag?: BlockTag | BlockIdentifier | undefined
     }
 )
 
@@ -86,7 +88,12 @@ export async function getProof<chain extends Chain | undefined>(
 
   const proof = await client.request({
     method: 'eth_getProof',
-    params: [address, storageKeys, blockNumberHex || blockTag],
+    params: [
+      address,
+      storageKeys,
+      blockNumberHex ||
+        (isBlockTag(blockTag) ? blockTag : serializeBlockIdentifier(blockTag)),
+    ],
   })
 
   return formatProof(proof)
